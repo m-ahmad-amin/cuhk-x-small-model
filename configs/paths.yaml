@@ -1,0 +1,13 @@
+drive:
+  code: /content/drive/MyDrive/cuhk-x-small-model
+  data: /content/drive/MyDrive/Small-Model-Track
+
+colab:
+  extract: /content/har_extract
+  test: /content/small_model_track_test
+  work: /content/cuhk-x-small-model
+
+outputs:
+  checkpoints: checkpoints/model_skel.pt
+  cache: cache_v2
+  submissions: submissions/submission_skel.csv
