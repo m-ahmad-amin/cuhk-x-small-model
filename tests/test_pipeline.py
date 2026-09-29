@@ -119,6 +119,84 @@ def test_skel_residual_zero_at_init() -> None:
     batch["mask"] = torch.tensor([[1.0, 0, 0, 0, 1.0, 0]])
     b = model(batch)
     assert torch.allclose(a, b, atol=1e-5)
+    batch["mask"] = torch.tensor([[1.0, 1.0, 0, 0, 0, 0]])
+    c = model(batch)
+    assert torch.allclose(a, c, atol=1e-5)
+
+
+def test_depth_motion_stem_expand() -> None:
+    import torch
+
+    from har.loaders import append_temporal_diff
+    from har.model import adapt_state_depth_motion
+
+    x = torch.randn(2, 3, 8, 16, 16)
+    y = append_temporal_diff(x)
+    assert y.shape == (2, 6, 8, 16, 16)
+    assert torch.allclose(y[:, :3], x)
+    assert torch.allclose(y[:, 3:, 0], torch.zeros_like(y[:, 3:, 0]))
+
+    base = MultiModalHAR()
+    motion = MultiModalHAR(depth_motion=True)
+    state = adapt_state_depth_motion(motion, dict(base.state_dict()))
+    missing, unexpected = motion.load_state_dict(state, strict=False)
+    assert not any(k.startswith("depth_enc.stem.0") for k in missing)
+    depth = torch.randn(1, 3, 8, 64, 64)
+    batch = {
+        "depth": depth,
+        "ir": depth,
+        "thermal": depth,
+        "imu": torch.zeros(1, 128, 45),
+        "skeleton": torch.zeros(1, 32, 17, 3),
+        "radar": torch.zeros(1, 32, 8),
+        "mask": torch.tensor([[1.0, 0, 0, 0, 0, 0]]),
+    }
+    out = motion(batch)
+    assert out.shape == (1, NUM_CLASSES)
+
+
+def test_skel_velocity_zero_init_matches() -> None:
+    import torch
+
+    from har.model import adapt_init_state, time_window_starts
+
+    assert time_window_starts(8, 8) == [0]
+    assert time_window_starts(24, 8) == [0, 8, 16]
+
+    torch.manual_seed(0)
+    base = MultiModalHAR()
+    vel = MultiModalHAR(skel_velocity=True)
+    state = adapt_init_state(vel, dict(base.state_dict()))
+    vel.load_state_dict(state, strict=False)
+    base.eval()
+    vel.eval()
+    depth = torch.randn(1, 3, 8, 64, 64)
+    skel = torch.randn(1, 32, 17, 3)
+    batch = {
+        "depth": depth,
+        "ir": depth,
+        "thermal": depth,
+        "imu": torch.zeros(1, 128, 45),
+        "skeleton": skel,
+        "radar": torch.zeros(1, 32, 8),
+        "mask": torch.tensor([[1.0, 0, 0, 0, 1.0, 0]]),
+    }
+    assert torch.allclose(base(batch), vel(batch), atol=1e-5)
+
+
+def test_augment_and_pose_torch() -> None:
+    import torch
+
+    from har.loaders import augment_depth_clip, normalize_pose_torch
+
+    x = torch.randn(3, 16, 112, 112)
+    y = augment_depth_clip(x)
+    assert y.shape == x.shape
+    skel = torch.randn(2, 32, 17, 3)
+    out = normalize_pose_torch(skel)
+    assert out.shape == skel.shape
+    hip = 0.5 * (out[:, :, 11] + out[:, :, 12])
+    assert float(hip.abs().mean()) < 0.05
 
 
 def test_model_forward_and_size() -> None:
@@ -127,6 +205,8 @@ def test_model_forward_and_size() -> None:
     model = MultiModalHAR()
     size = model_size_mb(model)
     assert size < 100.0, size
+    wide = MultiModalHAR(width=1.5)
+    assert model_size_mb(wide) < 100.0
     with tempfile.TemporaryDirectory() as tmp:
         clip = make_clip(Path(tmp), "SM_test_0001", "walk")
         sample = to_tensors(load_multimodal_from_test_clip(clip))
@@ -217,6 +297,12 @@ def main() -> None:
     print("ok  Chinese IMU device split")
     test_skel_residual_zero_at_init()
     print("ok  skeleton residual is zero at init")
+    test_depth_motion_stem_expand()
+    print("ok  depth motion 3ch -> 6ch stem")
+    test_skel_velocity_zero_init_matches()
+    print("ok  skeleton velocity zero-init matches")
+    test_augment_and_pose_torch()
+    print("ok  augment + pose torch")
     test_model_forward_and_size()
     print("ok  model forward + size < 100 MB")
     test_submission_format()
