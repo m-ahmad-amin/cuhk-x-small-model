@@ -1,26 +1,58 @@
 __pycache__/
 *.py[cod]
+*$py.class
 .venv/
 venv/
 .env
-data/raw/
-data/HAR/
-data/
-data/small_model_track_test/
-*.zip
-*.z0*
-cache/
-cache_v2/
-*.npy
-!cache/.gitkeep
-!cache_v2/.gitkeep
-runs/*
-!runs/.gitkeep
-checkpoints/*.pt
-checkpoints/*.pth
-*.pt
-*.pth
-submissions/
+.Python
+
+# Local / Drive clutter
 .DS_Store
+Thumbs.db
+desktop.ini
 .idea/
 .vscode/
+.cursor/
+
+# Data and archives (never commit)
+data/
+*.zip
+*.z0*
+*.7z
+
+# Caches (keep empty dirs via .gitkeep)
+cache/**
+!cache/
+!cache/.gitkeep
+cache_v2/**
+!cache_v2/
+!cache_v2/.gitkeep
+cache_v3/**
+!cache_v3/
+!cache_v3/.gitkeep
+cache_v4/**
+!cache_v4/
+!cache_v4/.gitkeep
+*.npy
+
+# Weights and runs
+runs/**
+!runs/
+!runs/.gitkeep
+checkpoints/**
+!checkpoints/
+!checkpoints/.gitkeep
+*.pt
+*.pth
+*.onnx
+*.ckpt
+
+# Kaggle outputs
+submissions/
+*.csv
+
+# Notebook junk
+.ipynb_checkpoints/
+
+docs/implemented.md
+docs/_make_figures.py
