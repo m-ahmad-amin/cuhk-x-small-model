@@ -4,6 +4,8 @@ Privacy-preserving human activity recognition: classify everyday actions from de
 
 The pipeline covers data caching, training, test-time augmentation, two-seed ensembling, and a single-script inference path that maps a folder of clips to class predictions.
 
+![cover](https://res.cloudinary.com/dzzrxqiho/image/upload/v1789941926/portfolio_thumb_o6oqe6.jpg)
+
 ## Result (Kaggle freeze)
 
 | Item | Value |
