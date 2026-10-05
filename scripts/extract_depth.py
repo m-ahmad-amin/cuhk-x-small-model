@@ -91,6 +91,8 @@ def extract(zip_dir: Path, out: Path, modality: str) -> Path:
     needles = [modality]
     if modality.lower() in {"depth", "depth_color"}:
         needles.extend(["Depth_Color", "Depth"])
+    if modality.lower() in {"ir", "infrared"}:
+        needles.extend(["IR", "Infrared"])
     for needle in needles:
         inc = f"-i!*{needle}*"
         cmd = [exe, "x", str(zip_path), f"-o{out}", "-y", "-r", inc]

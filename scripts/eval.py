@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 from har.config import output_dir
 from har.constants import NUM_CLASSES
 from har.dataset import CachedDepthDataset, collate_clips
-from har.model import MultiModalHAR
+from har.model import model_from_train_cfg
 
 
 def parse_args() -> argparse.Namespace:
@@ -66,7 +66,7 @@ def main() -> None:
     print("  stored val_acc", blob.get("val_acc"), "epoch", blob.get("epoch"))
     print("  train_cfg", blob.get("train_cfg"))
 
-    model = MultiModalHAR(num_classes=NUM_CLASSES).to(device)
+    model = model_from_train_cfg(blob.get("train_cfg"), num_classes=NUM_CLASSES).to(device)
     model.load_state_dict(blob["model"] if "model" in blob else blob)
     model.eval()
 
